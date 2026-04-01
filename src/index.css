@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "system-ui", "sans-serif";
+}
+
+@layer components {
+  /* Spotify pulse animation from the reference */
+  .pulse-dot {
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.7);
+    }
+  }
+}
+
+/* 
+  FORCE EXIT FROM OBS BLACK BACKGROUND 
+  This must be outside any layer at the end of the file
+*/
+html, body, #root {
+  background-color: transparent !important;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+:root {
+  color-scheme: light dark;
+}
