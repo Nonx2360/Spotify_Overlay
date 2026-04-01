@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+# 🎵 Spotify Now Playing Widget for OBS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A sleek, customizable, and high-performance "Now Playing" overlay for streamers. Built with **React**, **TypeScript**, **Tailwind CSS**, and a secure **Node.js/Express** backend.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+- **Live Sync**: Real-time polling of your Spotify playback.
+- **Visual Customizer**: Personalize your widget with a live preview before adding it to OBS.
+- **Customizable Themes**: Toggle between Dark and Light modes.
+- **Style Controls**: Adjust accent colors, border-radius, background opacity, and blur.
+- **Privacy-First**: Secure backend handling for Spotify OAuth credentials.
+- **OBS Optimized**: Designed specifically for high-performance browser sources with perfect transparency.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🖼️ Preview
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Configuration Interface
+![App Preview](./src/assets/preview.png)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Live in OBS
+![OBS Preview](./src/assets/preview_in_OBS.png)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🚀 Quick Start
+
+### 1. Spotify Developer Setup
+- Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+- Create a new App.
+- Add `http://127.0.0.1:3001/api/callback` to the **Redirect URIs** section.
+- Copy your **Client ID** and **Client Secret**.
+
+### 2. Local Configuration
+Create a `.env` file in the root directory:
+
+```env
+SPOTIFY_CLIENT_ID=your_client_id_here
+SPOTIFY_CLIENT_SECRET=your_client_secret_here
+SPOTIFY_REDIRECT_URI=http://127.0.0.1:3001/api/callback
+PORT=3001
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 3. Install & Run
+```bash
+# Install dependencies
+npm install
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Start both Frontend and Backend
+npm run dev
 ```
+
+---
+
+## 📺 Adding to OBS
+
+1. Open the [Config Page](http://localhost:5173).
+2. Connect your Spotify account.
+3. Use the sliders to customize your widget.
+4. **Copy the Overlay URL** from the bottom of the page.
+5. In OBS, add a new **Browser Source**.
+6. Paste the URL.
+7. Set **Width**: `400` and **Height**: `120`.
+8. Check "Shutdown source when not visible" for better performance.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Vite, React, TypeScript, Tailwind CSS v4
+- **Backend**: Node.js, Express, Spotify Web API Node
+- **Icons**: Lucide React
+
+---
+
+## 📄 License
+This project is open-source and free to use!
