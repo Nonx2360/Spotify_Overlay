@@ -15,7 +15,6 @@ export default function ConfigPage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [borderRadius, setBorderRadius] = useState(14);
   const [bgOpacity, setBgOpacity] = useState(0.72);
-  const [blurAmount, setBlurAmount] = useState(12);
   const [isAuth, setIsAuth] = useState(false);
 
   const { track: liveTrack, progress: liveProgress } = useNowPlaying();
@@ -36,7 +35,7 @@ export default function ConfigPage() {
 
   const overlayUrl = `http://localhost:5173/overlay?accent=${encodeURIComponent(
     accentColor
-  )}&theme=${theme}&radius=${borderRadius}&opacity=${bgOpacity}&blur=${blurAmount}`;
+  )}&theme=${theme}&radius=${borderRadius}&opacity=${bgOpacity}`;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex">
@@ -146,22 +145,6 @@ export default function ConfigPage() {
               className="w-full accent-[#1DB954]"
             />
           </div>
-
-          {/* Blur Amount */}
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Blur Amount</label>
-              <span className="text-xs text-neutral-500">{blurAmount}px</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="32"
-              value={blurAmount}
-              onChange={(e) => setBlurAmount(Number(e.target.value))}
-              className="w-full accent-[#1DB954]"
-            />
-          </div>
         </div>
       </div>
 
@@ -197,7 +180,6 @@ export default function ConfigPage() {
                 theme={theme}
                 borderRadius={borderRadius}
                 bgOpacity={bgOpacity}
-                blurAmount={blurAmount}
               />
             </div>
           </div>

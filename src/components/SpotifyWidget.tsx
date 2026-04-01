@@ -8,7 +8,6 @@ interface SpotifyWidgetProps {
   theme?: 'dark' | 'light';
   borderRadius?: number;
   bgOpacity?: number;
-  blurAmount?: number;
 }
 
 function formatTime(ms: number) {
@@ -25,7 +24,6 @@ export const SpotifyWidget: React.FC<SpotifyWidgetProps> = ({
   theme = 'dark',
   borderRadius = 14,
   bgOpacity = 0.72,
-  blurAmount = 12
 }) => {
   const isPlaying = track?.isPlaying || false;
   

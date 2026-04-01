@@ -10,7 +10,6 @@ export default function OverlayPage() {
   const theme = (searchParams.get('theme') as 'dark' | 'light') || 'dark';
   const borderRadius = parseInt(searchParams.get('radius') || '14', 10);
   const bgOpacity = parseFloat(searchParams.get('opacity') || '0.72');
-  const blurAmount = parseInt(searchParams.get('blur') || '12', 10);
 
   const { track, error, progress } = useNowPlaying(3000); // poll every 3 seconds
 
@@ -44,7 +43,6 @@ export default function OverlayPage() {
         theme={theme}
         borderRadius={borderRadius}
         bgOpacity={bgOpacity}
-        blurAmount={blurAmount}
       />
     </div>
   );
