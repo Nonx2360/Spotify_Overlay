@@ -16,13 +16,22 @@ export default function ConfigPage() {
   const [borderRadius, setBorderRadius] = useState(14);
   const [bgOpacity, setBgOpacity] = useState(0.72);
   const [isAuth, setIsAuth] = useState(false);
+  const [userData, setUserData] = useState<{ name: string; image: string | null } | null>(null);
 
   const { track: liveTrack, progress: liveProgress } = useNowPlaying();
 
   useEffect(() => {
     fetch('http://localhost:3001/api/status')
       .then((res) => res.json())
-      .then((data) => setIsAuth(data.isAuthenticated))
+      .then((data) => {
+        setIsAuth(data.isAuthenticated);
+        if (data.isAuthenticated) {
+          fetch('http://localhost:3001/api/user')
+            .then((res) => res.json())
+            .then((user) => setUserData(user))
+            .catch(() => setUserData(null));
+        }
+      })
       .catch(() => setIsAuth(false));
   }, []);
 
@@ -60,9 +69,25 @@ export default function ConfigPage() {
             </button>
           </div>
         ) : (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-            <h3 className="text-green-400 font-semibold mb-1 text-sm">Spotify Connected</h3>
-            <p className="text-xs text-green-500/70">Using live data for preview</p>
+          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              {userData?.image ? (
+                <img src={userData.image} alt={userData.name} className="w-10 h-10 rounded-full border border-green-500/30" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
+                   <span className="text-green-500 text-xs font-bold">{userData?.name?.charAt(0) || '?'}</span>
+                </div>
+              )}
+              <div className="flex flex-col">
+                <span className="text-xs text-green-500/70 font-medium">Welcome</span>
+                <span className="text-sm font-bold text-white">{userData?.name || 'User'}</span>
+              </div>
+            </div>
+            
+            <div className="pt-3 border-t border-green-500/10">
+              <h3 className="text-green-400 font-semibold mb-1 text-xs">Spotify Connected</h3>
+              <p className="text-[10px] text-green-500/50 uppercase tracking-tight">Using live data for preview</p>
+            </div>
           </div>
         )}
 

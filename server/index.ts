@@ -112,6 +112,24 @@ app.get('/api/now-playing', async (req, res) => {
   }
 });
 
+app.get('/api/user', async (req, res) => {
+  const isAuth = await checkAndRefreshTokens();
+  if (!isAuth || !userTokens.accessToken) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    const data = await spotifyApi.getMe();
+    res.json({
+      name: data.body.display_name,
+      image: data.body.images?.[0]?.url || null,
+    });
+  } catch (error) {
+    console.error('Failed to fetch user profile:', error);
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
 app.get('/api/status', (req, res) => {
   res.json({
     isAuthenticated: !!userTokens.accessToken
