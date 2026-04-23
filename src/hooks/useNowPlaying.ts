@@ -21,7 +21,7 @@ export function useNowPlaying(pollInterval: number = 3000) {
 
     const fetchNowPlaying = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/now-playing');
+        const response = await fetch('/api/now-playing');
         
         if (response.status === 401) {
           setError('Not authenticated');

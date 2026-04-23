@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"nodemon --watch server -e ts --exec node --experimental-strip-types server/index.ts\"",
+    "dev": "concurrently \"vite\" \"nodemon --watch api -e ts --exec node --experimental-strip-types api/index.ts\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

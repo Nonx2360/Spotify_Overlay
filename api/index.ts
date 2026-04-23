@@ -9,8 +9,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3001;
-
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
@@ -48,8 +46,8 @@ app.get('/api/callback', async (req, res) => {
     spotifyApi.setAccessToken(userTokens.accessToken);
     spotifyApi.setRefreshToken(userTokens.refreshToken);
     
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    res.redirect(frontendUrl); // Redirect back to front-end config UI
+    const frontendUrl = process.env.FRONTEND_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
+    res.redirect(frontendUrl);
   } catch (error) {
     console.error('Error during authorization code grant:', error);
     res.status(500).send('Authentication failed');
@@ -60,7 +58,7 @@ app.get('/api/callback', async (req, res) => {
 async function checkAndRefreshTokens() {
   if (!userTokens.refreshToken) return false;
   
-  if (Date.now() > userTokens.expiresAt - 60000) { // Refresh if less than 1 min remaining
+  if (Date.now() > userTokens.expiresAt - 60000) {
     try {
       const data = await spotifyApi.refreshAccessToken();
       userTokens.accessToken = data.body['access_token'];
@@ -75,7 +73,6 @@ async function checkAndRefreshTokens() {
   return true;
 }
 
-// Get Currently Playing (proxied completely server-side to hide auth details)
 app.get('/api/now-playing', async (req, res) => {
   const isAuth = await checkAndRefreshTokens();
   if (!isAuth || !userTokens.accessToken) {
@@ -92,7 +89,7 @@ app.get('/api/now-playing', async (req, res) => {
     const item = data.body.item;
     const progress_ms = data.body.progress_ms;
     
-    if (item.type !== 'track') { // Just handling music tracks for now
+    if (item.type !== 'track') {
       return res.status(200).json({ isPlaying: false });
     }
 
@@ -137,7 +134,6 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Logout / Reset
 app.post('/api/logout', (req, res) => {
   userTokens = { accessToken: '', refreshToken: '', expiresAt: 0 };
   spotifyApi.resetAccessToken();
@@ -145,6 +141,12 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server listening on http://localhost:${PORT}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`Backend server listening on http://localhost:${PORT}`);
+  });
+}
+
+export default app;

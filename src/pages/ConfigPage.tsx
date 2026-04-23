@@ -21,12 +21,12 @@ export default function ConfigPage() {
   const { track: liveTrack, progress: liveProgress } = useNowPlaying();
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/status')
+    fetch('/api/status')
       .then((res) => res.json())
       .then((data) => {
         setIsAuth(data.isAuthenticated);
         if (data.isAuthenticated) {
-          fetch('http://localhost:3001/api/user')
+          fetch('/api/user')
             .then((res) => res.json())
             .then((user) => setUserData(user))
             .catch(() => setUserData(null));
@@ -36,13 +36,13 @@ export default function ConfigPage() {
   }, []);
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:3001/api/login';
+    window.location.href = '/api/login';
   };
 
   const previewTrack = isAuth && liveTrack?.song ? liveTrack : DEFAULT_TRACK;
   const previewProgress = isAuth && liveTrack?.song ? liveProgress : DEFAULT_TRACK.progress_ms!;
 
-  const overlayUrl = `http://localhost:5173/overlay?accent=${encodeURIComponent(
+  const overlayUrl = `${window.location.origin}/overlay?accent=${encodeURIComponent(
     accentColor
   )}&theme=${theme}&radius=${borderRadius}&opacity=${bgOpacity}`;
 
