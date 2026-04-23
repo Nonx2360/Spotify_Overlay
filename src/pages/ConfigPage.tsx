@@ -20,22 +20,43 @@ export default function ConfigPage() {
   const [userData, setUserData] = useState<{ name: string; image: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { track: liveTrack, progress: liveProgress } = useNowPlaying();
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+
+  // Extract refresh token from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('refreshToken');
+    if (token) {
+      localStorage.setItem('spotify_refresh_token', token);
+      setRefreshToken(token);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      setRefreshToken(localStorage.getItem('spotify_refresh_token'));
+    }
+  }, []);
+
+  const { track: liveTrack, progress: liveProgress } = useNowPlaying(refreshToken);
 
   useEffect(() => {
-    fetch('/api/status')
+    if (!refreshToken) {
+      setIsAuth(false);
+      return;
+    }
+
+    fetch(`/api/status?refreshToken=${refreshToken}`)
       .then((res) => res.json())
       .then((data) => {
         setIsAuth(data.isAuthenticated);
         if (data.isAuthenticated) {
-          fetch('/api/user')
+          fetch(`/api/user?refreshToken=${refreshToken}`)
             .then((res) => res.json())
             .then((user) => setUserData(user))
             .catch(() => setUserData(null));
         }
       })
       .catch(() => setIsAuth(false));
-  }, []);
+  }, [refreshToken]);
 
   const handleLogin = () => {
     window.location.href = '/api/login';
@@ -46,7 +67,7 @@ export default function ConfigPage() {
 
   const overlayUrl = `${window.location.origin}/overlay?accent=${encodeURIComponent(
     accentColor
-  )}&theme=${theme}&radius=${borderRadius}&opacity=${bgOpacity}`;
+  )}&theme=${theme}&radius=${borderRadius}&opacity=${bgOpacity}${refreshToken ? `&refreshToken=${refreshToken}` : ''}`;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex">

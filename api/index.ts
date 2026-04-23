@@ -9,20 +9,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const spotifyApi = new SpotifyWebApi({
-  clientId: process.env.SPOTIFY_CLIENT_ID,
-  clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: process.env.SPOTIFY_REDIRECT_URI,
-});
+// In-memory cache to prevent hitting Spotify's token refresh endpoint every 3 seconds
+// This cache is ephemeral and will be lost on Vercel instance restarts, which is fine!
+const tokenCache = new Map<string, { accessToken: string; expiresAt: number }>();
 
-let userTokens = {
-  accessToken: '',
-  refreshToken: '',
-  expiresAt: 0,
+const getSpotifyApi = () => {
+  return new SpotifyWebApi({
+    clientId: process.env.SPOTIFY_CLIENT_ID,
+    clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+    redirectUri: process.env.SPOTIFY_REDIRECT_URI,
+  });
 };
 
 // Start OAuth Flow
 app.get('/api/login', (req, res) => {
+  const spotifyApi = getSpotifyApi();
   const scopes = ['user-read-currently-playing', 'user-read-playback-state'];
   const authorizeURL = spotifyApi.createAuthorizeURL(scopes, 'some-state');
   res.redirect(authorizeURL);
@@ -36,48 +37,79 @@ app.get('/api/callback', async (req, res) => {
     return res.status(400).send('No code provided');
   }
 
+  const spotifyApi = getSpotifyApi();
+
   try {
     const data = await spotifyApi.authorizationCodeGrant(code);
     
-    userTokens.accessToken = data.body['access_token'];
-    userTokens.refreshToken = data.body['refresh_token'];
-    userTokens.expiresAt = Date.now() + data.body['expires_in'] * 1000;
+    const accessToken = data.body['access_token'];
+    const refreshToken = data.body['refresh_token'];
+    const expiresAt = Date.now() + data.body['expires_in'] * 1000;
     
-    spotifyApi.setAccessToken(userTokens.accessToken);
-    spotifyApi.setRefreshToken(userTokens.refreshToken);
+    // Cache the initial token
+    tokenCache.set(refreshToken, { accessToken, expiresAt });
     
     const frontendUrl = process.env.FRONTEND_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
-    res.redirect(frontendUrl);
+    
+    // Redirect to frontend WITH the refresh token in the URL
+    // The frontend will save it and remove it from the URL
+    res.redirect(`${frontendUrl}?refreshToken=${refreshToken}`);
   } catch (error) {
     console.error('Error during authorization code grant:', error);
     res.status(500).send('Authentication failed');
   }
 });
 
-// Helper to ensure valid token
-async function checkAndRefreshTokens() {
-  if (!userTokens.refreshToken) return false;
+// Helper to ensure valid token from the client's refresh token
+async function getValidAccessToken(refreshToken: string): Promise<string | null> {
+  if (!refreshToken) return null;
+
+  const cached = tokenCache.get(refreshToken);
   
-  if (Date.now() > userTokens.expiresAt - 60000) {
-    try {
-      const data = await spotifyApi.refreshAccessToken();
-      userTokens.accessToken = data.body['access_token'];
-      userTokens.expiresAt = Date.now() + data.body['expires_in'] * 1000;
-      spotifyApi.setAccessToken(userTokens.accessToken);
-      return true;
-    } catch (error) {
-      console.error('Failed to refresh token', error);
-      return false;
-    }
+  // If we have a valid cached token, use it
+  if (cached && Date.now() < cached.expiresAt - 60000) {
+    return cached.accessToken;
   }
-  return true;
+
+  // Otherwise, refresh it using the Spotify API
+  try {
+    const spotifyApi = getSpotifyApi();
+    spotifyApi.setRefreshToken(refreshToken);
+    const data = await spotifyApi.refreshAccessToken();
+    
+    const newAccessToken = data.body['access_token'];
+    const expiresAt = Date.now() + data.body['expires_in'] * 1000;
+    
+    tokenCache.set(refreshToken, { accessToken: newAccessToken, expiresAt });
+    return newAccessToken;
+  } catch (error) {
+    console.error('Failed to refresh token', error);
+    // If refresh fails (e.g. token revoked), remove from cache
+    tokenCache.delete(refreshToken);
+    return null;
+  }
 }
 
-app.get('/api/now-playing', async (req, res) => {
-  const isAuth = await checkAndRefreshTokens();
-  if (!isAuth || !userTokens.accessToken) {
-    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+// Middleware to extract refresh token and initialize Spotify API
+const authenticate = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const refreshToken = req.query.refreshToken as string;
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'No refresh token provided' });
   }
+
+  const accessToken = await getValidAccessToken(refreshToken);
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Failed to authenticate with Spotify' });
+  }
+
+  const spotifyApi = getSpotifyApi();
+  spotifyApi.setAccessToken(accessToken);
+  (req as any).spotifyApi = spotifyApi;
+  next();
+};
+
+app.get('/api/now-playing', authenticate, async (req, res) => {
+  const spotifyApi = (req as any).spotifyApi as SpotifyWebApi;
 
   try {
     const data = await spotifyApi.getMyCurrentPlaybackState();
@@ -110,11 +142,8 @@ app.get('/api/now-playing', async (req, res) => {
   }
 });
 
-app.get('/api/user', async (req, res) => {
-  const isAuth = await checkAndRefreshTokens();
-  if (!isAuth || !userTokens.accessToken) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+app.get('/api/user', authenticate, async (req, res) => {
+  const spotifyApi = (req as any).spotifyApi as SpotifyWebApi;
 
   try {
     const data = await spotifyApi.getMe();
@@ -128,16 +157,23 @@ app.get('/api/user', async (req, res) => {
   }
 });
 
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+  const refreshToken = req.query.refreshToken as string;
+  if (!refreshToken) {
+    return res.json({ isAuthenticated: false });
+  }
+
+  const accessToken = await getValidAccessToken(refreshToken);
   res.json({
-    isAuthenticated: !!userTokens.accessToken
+    isAuthenticated: !!accessToken
   });
 });
 
 app.post('/api/logout', (req, res) => {
-  userTokens = { accessToken: '', refreshToken: '', expiresAt: 0 };
-  spotifyApi.resetAccessToken();
-  spotifyApi.resetRefreshToken();
+  const refreshToken = req.query.refreshToken as string;
+  if (refreshToken) {
+    tokenCache.delete(refreshToken);
+  }
   res.json({ success: true });
 });
 

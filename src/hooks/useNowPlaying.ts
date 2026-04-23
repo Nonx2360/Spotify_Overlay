@@ -10,18 +10,23 @@ export interface TrackInfo {
   duration_ms?: number;
 }
 
-export function useNowPlaying(pollInterval: number = 3000) {
+export function useNowPlaying(refreshToken: string | null, pollInterval: number = 3000) {
   const [track, setTrack] = useState<TrackInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    if (!refreshToken) {
+      setLoading(false);
+      return;
+    }
+
     let timeoutId: number;
 
     const fetchNowPlaying = async () => {
       try {
-        const response = await fetch('/api/now-playing');
+        const response = await fetch(`/api/now-playing?refreshToken=${refreshToken}`);
         
         if (response.status === 401) {
           setError('Not authenticated');
@@ -52,7 +57,7 @@ export function useNowPlaying(pollInterval: number = 3000) {
     fetchNowPlaying();
 
     return () => clearTimeout(timeoutId);
-  }, [pollInterval]);
+  }, [pollInterval, refreshToken]);
 
   // Client-side progress interpolation
   useEffect(() => {
