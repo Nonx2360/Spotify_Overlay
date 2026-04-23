@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { SpotifyWidget } from '../components/SpotifyWidget';
 import { useNowPlaying, type TrackInfo } from '../hooks/useNowPlaying';
 
@@ -17,6 +18,7 @@ export default function ConfigPage() {
   const [bgOpacity, setBgOpacity] = useState(0.72);
   const [isAuth, setIsAuth] = useState(false);
   const [userData, setUserData] = useState<{ name: string; image: string | null } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { track: liveTrack, progress: liveProgress } = useNowPlaying();
 
@@ -69,7 +71,7 @@ export default function ConfigPage() {
             </button>
           </div>
         ) : (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex flex-col gap-4">
+          <div className="bg-green-950/60 border border-green-800/50 rounded-xl p-4 flex flex-col gap-4">
             <div className="flex items-center gap-3">
               {userData?.image ? (
                 <img src={userData.image} alt={userData.name} className="w-10 h-10 rounded-full border border-green-500/30" />
@@ -84,30 +86,30 @@ export default function ConfigPage() {
               </div>
             </div>
             
-            <div className="pt-3 border-t border-green-500/10">
-              <h3 className="text-green-400 font-semibold mb-1 text-xs">Spotify Connected</h3>
-              <p className="text-[10px] text-green-500/50 uppercase tracking-tight">Using live data for preview</p>
+            <div className="pt-3 border-t border-green-800/30 flex flex-col items-start">
+              <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full font-medium mb-1">Spotify Connected</span>
+              <p className="text-[10px] text-green-500/50 uppercase tracking-wider">Using live data for preview</p>
             </div>
           </div>
         )}
 
-        <div className="space-y-6 flex-1">
+        <div className="flex-1 flex flex-col">
           {/* Theme */}
-          <div className="space-y-3">
-            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Theme</label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="py-5 border-b border-white/10 space-y-3">
+            <label className="text-xs font-semibold tracking-widest text-white/40 uppercase">Theme</label>
+            <div className="flex bg-white/10 rounded-lg p-1">
               <button
                 onClick={() => setTheme('dark')}
-                className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
-                  theme === 'dark' ? 'bg-neutral-800 border-neutral-600 text-white' : 'border-neutral-800 text-neutral-500 hover:bg-neutral-800/50'
+                className={`flex-1 py-1.5 text-sm font-medium transition-all duration-200 rounded-md ${
+                  theme === 'dark' ? 'bg-white text-black' : 'text-white/50 hover:text-white/70'
                 }`}
               >
                 Dark
               </button>
               <button
                 onClick={() => setTheme('light')}
-                className={`py-2 px-4 rounded-lg text-sm font-medium border transition-colors ${
-                  theme === 'light' ? 'bg-neutral-200 border-neutral-400 text-black' : 'border-neutral-800 text-neutral-500 hover:bg-neutral-800/50'
+                className={`flex-1 py-1.5 text-sm font-medium transition-all duration-200 rounded-md ${
+                  theme === 'light' ? 'bg-white text-black' : 'text-white/50 hover:text-white/70'
                 }`}
               >
                 Light
@@ -116,33 +118,36 @@ export default function ConfigPage() {
           </div>
 
           {/* Accent Color */}
-          <div className="space-y-3">
-            <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Accent Color</label>
-            <div className="flex gap-3">
+          <div className="py-5 border-b border-white/10 space-y-3">
+            <label className="text-xs font-semibold tracking-widest text-white/40 uppercase">Accent Color</label>
+            <div className="flex gap-3 items-center">
               {['#1DB954', '#ffffff', '#FF5A5A', '#A154FF', '#FFBD54'].map((c) => (
                 <button
                   key={c}
+                  title={c}
                   onClick={() => setAccentColor(c)}
-                  className={`w-8 h-8 rounded-full border-2 transition-transform ${
-                    accentColor === c ? 'border-white scale-110' : 'border-transparent'
+                  className={`w-7 h-7 rounded-full transition-all ${
+                    accentColor === c ? 'ring-2 ring-white ring-offset-2 ring-offset-black scale-110' : 'hover:scale-110'
                   }`}
                   style={{ backgroundColor: c }}
                 />
               ))}
-              <input
-                type="color"
-                value={accentColor}
-                onChange={(e) => setAccentColor(e.target.value)}
-                className="w-8 h-8 p-0 border-0 rounded-full overflow-hidden cursor-pointer"
-              />
+              <div className="relative w-7 h-7 rounded-full overflow-hidden border border-white/20 ml-1">
+                <input
+                  type="color"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer"
+                />
+              </div>
             </div>
           </div>
 
           {/* Border Radius */}
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Border Radius</label>
-              <span className="text-xs text-neutral-500">{borderRadius}px</span>
+          <div className="py-5 border-b border-white/10 space-y-3">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-semibold tracking-widest text-white/40 uppercase">Border Radius</label>
+              <span className="text-white/70 text-sm">{borderRadius}px</span>
             </div>
             <input
               type="range"
@@ -150,15 +155,16 @@ export default function ConfigPage() {
               max="100"
               value={borderRadius}
               onChange={(e) => setBorderRadius(Number(e.target.value))}
-              className="w-full accent-[#1DB954]"
+              className="w-full h-1.5 appearance-none rounded-full outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md cursor-pointer"
+              style={{ background: `linear-gradient(to right, ${accentColor} ${borderRadius}%, rgba(255,255,255,0.2) ${borderRadius}%)` }}
             />
           </div>
 
           {/* Background Opacity */}
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Background Opacity</label>
-              <span className="text-xs text-neutral-500">{Math.round(bgOpacity * 100)}%</span>
+          <div className="py-5 space-y-3">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-semibold tracking-widest text-white/40 uppercase">Background Opacity</label>
+              <span className="text-white/70 text-sm">{Math.round(bgOpacity * 100)}%</span>
             </div>
             <input
               type="range"
@@ -167,7 +173,8 @@ export default function ConfigPage() {
               step="0.01"
               value={bgOpacity}
               onChange={(e) => setBgOpacity(Number(e.target.value))}
-              className="w-full accent-[#1DB954]"
+              className="w-full h-1.5 appearance-none rounded-full outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md cursor-pointer"
+              style={{ background: `linear-gradient(to right, ${accentColor} ${bgOpacity * 100}%, rgba(255,255,255,0.2) ${bgOpacity * 100}%)` }}
             />
           </div>
         </div>
@@ -176,16 +183,16 @@ export default function ConfigPage() {
       {/* Main Preview Area */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
         {/* Decorative Grid BG */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle,_#ffffff08_1px,_transparent_1px)] bg-[size:20px_20px]"></div>
 
-        <div className="relative z-10 flex flex-col items-center gap-12 w-full max-w-2xl">
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Live Preview</h2>
-            <p className="text-neutral-500">How it will look on your stream</p>
+        <div className="relative z-10 flex flex-col items-center justify-center w-full h-full max-w-2xl">
+          <div className="text-center space-y-2 mb-12">
+            <h2 className="text-3xl text-white/90 font-semibold tracking-tight">Live Preview</h2>
+            <p className="text-white/40 text-sm">How it will look on your stream</p>
           </div>
 
           {/* Checkerboard Pattern underneath widget to show transparency properly */}
-          <div className="p-8 rounded-3xl relative">
+          <div className="p-8 rounded-3xl relative mb-20">
             <div className="absolute inset-0 rounded-3xl overflow-hidden opacity-20">
               <div
                 className="w-full h-full"
@@ -209,13 +216,20 @@ export default function ConfigPage() {
             </div>
           </div>
 
-          <div className="w-full bg-neutral-900 border border-neutral-800 p-6 rounded-xl flex flex-col gap-4">
+          <div className="absolute bottom-4 w-full border border-white/10 rounded-xl p-4 bg-white/5 flex flex-col gap-3 backdrop-blur-sm">
              <div>
-                <h3 className="text-sm font-semibold text-white mb-1">Overlay URL</h3>
-                <p className="text-xs text-neutral-400">Add this as a Browser Source in OBS. Set width to 400px, height to 120px.</p>
+                <h3 className="text-sm font-semibold text-white/90 mb-1">Overlay URL</h3>
+                <p className="text-xs text-white/40">Add this as a Browser Source in OBS. Set width to 400px, height to 120px.</p>
              </div>
-             <div className="flex gap-2 p-3 bg-black rounded-lg border border-neutral-800 items-center overflow-hidden">
-                <code className="text-xs text-neutral-300 flex-1 truncate select-all">{overlayUrl}</code>
+             <div className="flex gap-2 p-2 bg-black/40 rounded-lg border border-white/5 items-center overflow-hidden">
+                <code className="font-mono text-sm text-white/70 flex-1 truncate select-all px-2">{overlayUrl}</code>
+                <button 
+                  onClick={() => { navigator.clipboard.writeText(overlayUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-md text-xs font-medium text-white/90"
+                >
+                  {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
              </div>
           </div>
         </div>
