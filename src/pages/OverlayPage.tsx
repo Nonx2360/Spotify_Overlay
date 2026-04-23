@@ -11,7 +11,8 @@ export default function OverlayPage() {
   const borderRadius = parseInt(searchParams.get('radius') || '14', 10);
   const bgOpacity = parseFloat(searchParams.get('opacity') || '0.72');
 
-  const { track, error, progress } = useNowPlaying(3000); // poll every 3 seconds
+  const refreshToken = searchParams.get('refreshToken');
+  const { track, error, progress } = useNowPlaying(refreshToken, 3000); // poll every 3 seconds
 
   // Reset body background explicitly for OBS transparency
   useEffect(() => {
